@@ -407,53 +407,262 @@
             transform: scale(1.2);
         }
     </style>
+  <script type="module" crossorigin src="/assets/index-CoFKzVXi.js"></script>
 </head>
 
 <body>
     <div class="sidebar">
-        <div class="brand"><i class="fas fa-utensils"></i> RestoManager</div>
-        <div class="menu-item active" onclick="showSection('shifts')"><i class="fas fa-users"></i> Work Shifts</div>
-        <div class="menu-item" onclick="showSection('deliveries')"><i class="fas fa-motorcycle"></i> Deliveries</div>
-        <div class="menu-item" onclick="showSection('training')"><i class="fas fa-chalkboard-teacher"></i> Training
-        </div>
-        <div class="menu-item" onclick="showSection('appointments')"><i class="fas fa-calendar-check"></i> Appointments
-        </div>
-        <div class="menu-item logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
-    </div>
+        .bg-green {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
 
-    <div class="main-content">
-        <div class="header">
-            <div class="header-left">
-                <h2 id="page-title">Work Shifts</h2>
-                <div id="admin-badge" class="admin-badge">
-                    <i class="fas fa-shield-alt"></i> ADMIN MODE
+        .bg-orange {
+        background: linear-gradient(45deg, #f39c12, #d35400);
+        }
+
+        .bg-blue {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+
+        .time-slot {
+        color: var(--accent);
+        font-weight: 600;
+        }
+
+        /* Buttons */
+        .add-btn {
+        background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        transition: transform 0.2s;
+        }
+
+        .add-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .logout-btn {
+        margin-top: auto;
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+        background: rgba(231, 76, 60, 0.8);
+        color: white;
+        }
+
+        /* Admin Badge */
+        .admin-badge {
+        background: linear-gradient(45deg, #FF512F, #DD2476);
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(221, 36, 118, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        }
+
+        .modal-content {
+        background: #1e272e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 400px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 25px;
+        color: var(--accent);
+        text-align: center;
+        }
+
+        .form-group {
+        margin-bottom: 20px;
+        }
+
+        .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        transition: 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Fix for select dropdown options */
+        .form-group select option {
+        background: #2c3e50;
+        color: white;
+        }
+
+        .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 30px;
+        }
+
+        .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+        }
+
+        .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        }
+
+        .btn-save {
+        background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        transition: 0.3s;
+        }
+
+        .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .edit-icon,
+        .delete-icon {
+        opacity: 0.7;
+        transition: 0.2s;
+        }
+
+        .edit-icon:hover {
+        color: var(--accent);
+        opacity: 1;
+        transform: scale(1.2);
+        }
+
+        .delete-icon:hover {
+        color: var(--danger);
+        opacity: 1;
+        transform: scale(1.2);
+        }
+        </style>
+        </head>
+
+        <body>
+            <div class="sidebar">
+                <div class="brand"><i class="fas fa-utensils"></i> RestoManager</div>
+                <div class="menu-item active" onclick="showSection('shifts')"><i class="fas fa-users"></i> Work Shifts
+                </div>
+                <div class="menu-item" onclick="showSection('deliveries')"><i class="fas fa-motorcycle"></i> Deliveries
+                </div>
+                <div class="menu-item" onclick="showSection('training')"><i class="fas fa-chalkboard-teacher"></i>
+                    Training
+                </div>
+                <div class="menu-item" onclick="showSection('appointments')"><i class="fas fa-calendar-check"></i>
+                    Appointments
+                </div>
+                <div class="menu-item" onclick="showSection('kitchen')"><i class="fas fa-fire"></i> Kitchen Orders</div>
+                <div class="menu-item logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+            </div>
+
+            <div class="main-content">
+                <div class="header">
+                    <div class="header-left">
+                        <h2 id="page-title">Work Shifts</h2>
+                        <div id="admin-badge" class="admin-badge">
+                            <i class="fas fa-shield-alt"></i> ADMIN MODE
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <button id="add-worker-btn" class="add-btn" onclick="openAddWorkerModal()">
+                            <i class="fas fa-plus"></i> Add Worker
+                        </button>
+                        <button id="add-test-order-btn" class="add-btn"
+                            style="background: var(--success); display: none;" onclick="addTestOrder()">
+                            <i class="fas fa-plus"></i> Add Test Order
+                        </button>
+                        <button id="toggle-status-btn" class="add-btn"
+                            style="background-color: var(--warning); display: none;" onclick="toggleStatus()">
+                            <i class="fas fa-power-off"></i> Toggle Status
+                        </button>
+                        <div class="date-display" id="current-date">Loading...</div>
+                    </div>
+                </div>
+
+                <div id="shifts" class="section-container active">
+                    <div class="card-list" id="shifts-list"></div>
+                </div>
+                <div id="deliveries" class="section-container">
+                    <div class="card-list" id="deliveries-list"></div>
+                </div>
+                <div id="training" class="section-container">
+                    <div class="card-list" id="training-list"></div>
+                </div>
+                <div id="appointments" class="section-container">
+                    <div class="card-list" id="appointments-list"></div>
+                </div>
+                <div id="kitchen" class="section-container">
+                    <div class="card-list" id="kitchen-list">
+                        <!-- Orders will appear here -->
+                    </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <button id="add-worker-btn" class="add-btn" onclick="openAddWorkerModal()">
-                    <i class="fas fa-plus"></i> Add Worker
-                </button>
-                <button id="toggle-status-btn" class="add-btn" style="background-color: var(--warning); display: none;"
-                    onclick="toggleStatus()">
-                    <i class="fas fa-power-off"></i> Toggle Status
-                </button>
-                <div class="date-display" id="current-date">Loading...</div>
-            </div>
-        </div>
-
-        <div id="shifts" class="section-container active">
-            <div class="card-list" id="shifts-list"></div>
-        </div>
-        <div id="deliveries" class="section-container">
-            <div class="card-list" id="deliveries-list"></div>
-        </div>
-        <div id="training" class="section-container">
-            <div class="card-list" id="training-list"></div>
-        </div>
-        <div id="appointments" class="section-container">
-            <div class="card-list" id="appointments-list"></div>
-        </div>
-    </div>
     </div>
 
     <!-- Edit Modal -->
@@ -507,6 +716,9 @@
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+    <!-- Firebase Logic (Module) -->
+
     <script>
         // 1. Initialize Socket.IO connection
         const socket = io('http://localhost:3000');
@@ -704,16 +916,28 @@
         function showSection(id) {
             document.querySelectorAll('.section-container, .menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            const idx = ['shifts', 'deliveries', 'training', 'appointments'].indexOf(id);
-            document.querySelectorAll('.menu-item')[idx].classList.add('active');
+
+            // Find index for menu item highlight
+            const sections = ['shifts', 'deliveries', 'training', 'appointments', 'kitchen'];
+            const idx = sections.indexOf(id);
+            if (idx !== -1) {
+                document.querySelectorAll('.menu-item')[idx].classList.add('active');
+            }
+
             document.getElementById('page-title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
 
-            // Show Add Button only on Shifts page for Admin
-            const addBtn = document.getElementById('add-worker-btn');
-            if (userRole === 'admin' && id === 'shifts') {
-                addBtn.style.display = 'flex';
-            } else {
-                addBtn.style.display = 'none';
+            // Hide all action buttons first
+            document.getElementById('add-worker-btn').style.display = 'none';
+            document.getElementById('add-test-order-btn').style.display = 'none';
+
+            // Show specific buttons based on section and role
+            if (userRole === 'admin') {
+                if (id === 'shifts') {
+                    document.getElementById('add-worker-btn').style.display = 'flex';
+                }
+                if (id === 'kitchen') {
+                    document.getElementById('add-test-order-btn').style.display = 'flex';
+                }
             }
         }
 
