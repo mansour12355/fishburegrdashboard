@@ -1,20 +1,18 @@
 {
-  "name": "resto-dashboard",
+  "name": "frontend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "build": "vite build",
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.2.1",
-    "mongoose": "^9.0.0",
-    "socket.io": "^4.8.1"
+  "devDependencies": {
+    "vite": "^7.2.6"
   }
 }

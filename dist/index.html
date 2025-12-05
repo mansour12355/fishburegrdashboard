@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Ops Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --text-main: #ffffff;
+            --text-muted: #bdc3c7;
+            --accent: #00d2ff;
+            --accent-hover: #3a7bd5;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: var(--glass-border);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--glass-shadow);
+            z-index: 10;
+        }
+
+        .brand {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 50px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+
+        .menu-item {
+            padding: 16px;
+            cursor: pointer;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            border: var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, #bdc3c7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .date-display {
+            background: var(--glass-bg);
+            backdrop-filter: blur(5px);
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .section-container {
+            display: none;
+        }
+
+        .section-container.active {
+            display: block;
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        /* Glass Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Card Accents */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .card.shift::before {
+            background: var(--accent);
+        }
+
+        .card.delivery::before {
+            background: #ff9966;
+        }
+
+        .card.training::before {
+            background: var(--success);
+        }
+
+        .card.appoint::before {
+            background: var(--warning);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .card-body p {
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .bg-green {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+
+        .bg-orange {
+            background: linear-gradient(45deg, #f39c12, #d35400);
+        }
+
+        .bg-blue {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+
+        .time-slot {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .add-btn {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 0.8);
+            color: white;
+        }
+
+        /* Admin Badge */
+        .admin-badge {
+            background: linear-gradient(45deg, #FF512F, #DD2476);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(221, 36, 118, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1e272e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 400px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Fix for select dropdown options */
+        .form-group select option {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-save {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .edit-icon,
+        .delete-icon {
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+
+        .edit-icon:hover {
+            color: var(--accent);
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .delete-icon:hover {
+            color: var(--danger);
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="brand"><i class="fas fa-utensils"></i> RestoManager</div>
+        <div class="menu-item active" onclick="showSection('shifts')"><i class="fas fa-users"></i> Work Shifts</div>
+        <div class="menu-item" onclick="showSection('deliveries')"><i class="fas fa-motorcycle"></i> Deliveries</div>
+        <div class="menu-item" onclick="showSection('training')"><i class="fas fa-chalkboard-teacher"></i> Training
+        </div>
+        <div class="menu-item" onclick="showSection('appointments')"><i class="fas fa-calendar-check"></i> Appointments
+        </div>
+        <div class="menu-item logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="header-left">
+                <h2 id="page-title">Work Shifts</h2>
+                <div id="admin-badge" class="admin-badge">
+                    <i class="fas fa-shield-alt"></i> ADMIN MODE
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button id="add-worker-btn" class="add-btn" onclick="openAddWorkerModal()">
+                    <i class="fas fa-plus"></i> Add Worker
+                </button>
+                <button id="toggle-status-btn" class="add-btn" style="background-color: var(--warning); display: none;"
+                    onclick="toggleStatus()">
+                    <i class="fas fa-power-off"></i> Toggle Status
+                </button>
+                <div class="date-display" id="current-date">Loading...</div>
+            </div>
+        </div>
+
+        <div id="shifts" class="section-container active">
+            <div class="card-list" id="shifts-list"></div>
+        </div>
+        <div id="deliveries" class="section-container">
+            <div class="card-list" id="deliveries-list"></div>
+        </div>
+        <div id="training" class="section-container">
+            <div class="card-list" id="training-list"></div>
+        </div>
+        <div id="appointments" class="section-container">
+            <div class="card-list" id="appointments-list"></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Entry</div>
+            <div class="form-group">
+                <label id="editLabel">Value</label>
+                <input type="text" id="editValue">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn-save" onclick="submitEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Worker Modal -->
+    <div id="addWorkerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add New Worker</div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newWorkerName" placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <input type="text" id="newWorkerRole" placeholder="e.g. Waiter">
+            </div>
+            <div class="form-group">
+                <label>Shift Time</label>
+                <input type="text" id="newWorkerTime" placeholder="e.g. 09:00 - 17:00">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="newWorkerPassword" placeholder="Enter password">
+            </div>
+            <div class="form-group">
+                <label>Initial Status</label>
+                <select id="newWorkerStatus">
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="On Duty">On Duty</option>
+                    <option value="Off Duty">Off Duty</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('addWorkerModal')">Cancel</button>
+                <button class="btn-save" onclick="submitAddWorker()">Add Worker</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        // 1. Initialize Socket.IO connection
+        const socket = io('http://localhost:3000');
+        const userRole = localStorage.getItem('user_role');
+        const userName = localStorage.getItem('user_name');
+
+        // Security / Admin Setup
+        if (!userRole) {
+            window.location.href = 'login.html';
+        } else if (userRole === 'admin') {
+            document.body.classList.add('admin-mode');
+            const badge = document.getElementById('admin-badge');
+            if (badge) badge.style.display = 'flex';
+
+            // Show Add Button only on Shifts page initially if active
+            if (document.getElementById('shifts').classList.contains('active')) {
+                document.getElementById('add-worker-btn').style.display = 'flex';
+            }
+        } else {
+            // Worker Mode: Show Toggle Status Button
+            document.getElementById('toggle-status-btn').style.display = 'flex';
+        }
+
+        function logout() {
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+            window.location.href = 'login.html';
+        }
+
+        // --- Helper to Generate Editable HTML ---
+        function edit(category, id, field, value) {
+            const safeValue = String(value).replace(/"/g, '&quot;');
+            if (userRole === 'admin') {
+                return `
+                <span>${value}</span>
+                <i class="fas fa-pencil-alt edit-icon" 
+                   title="Edit"
+                   onclick="openEditModal('${category}', '${id}', '${field}', '${safeValue}')">
+                </i>
+            `;
+            } else {
+                return `<span>${value}</span>`;
+            }
+        }
+
+        function del(category, id) {
+            if (userRole === 'admin') {
+                return `<i class="fas fa-trash-alt delete-icon" title="Delete" onclick="deleteItem('${category}', '${id}')"></i>`;
+            } else {
+                return '';
+            }
+        }
+
+        // --- Core Logic ---
+        let currentEdit = null;
+
+        function openEditModal(category, id, field, oldValue) {
+            currentEdit = { category, id, field };
+            document.getElementById('editLabel').innerText = `Edit ${field}`;
+            document.getElementById('editValue').value = oldValue;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function submitEdit() {
+            if (!currentEdit) return;
+            const newValue = document.getElementById('editValue').value;
+            socket.emit('updateEntry', {
+                category: currentEdit.category,
+                id: currentEdit.id,
+                field: currentEdit.field,
+                value: newValue
+            });
+            document.getElementById('editModal').style.display = 'none';
+            currentEdit = null;
+        }
+
+        function deleteItem(category, id) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                socket.emit('deleteEntry', { category, id });
+            }
+        }
+
+        function toggleStatus() {
+            if (userName) {
+                socket.emit('workerToggleStatus', { name: userName });
+            }
+        }
+
+        function openAddWorkerModal() {
+            document.getElementById('addWorkerModal').style.display = 'flex';
+        }
+
+        function submitAddWorker() {
+            const name = document.getElementById('newWorkerName').value;
+            const role = document.getElementById('newWorkerRole').value;
+            const time = document.getElementById('newWorkerTime').value;
+            const password = document.getElementById('newWorkerPassword').value;
+            const status = document.getElementById('newWorkerStatus').value;
+
+            if (name && role && time && password) {
+                socket.emit('addWorker', { name, role, time, password, status });
+                closeModal('addWorkerModal');
+                // Clear fields
+                document.getElementById('newWorkerName').value = '';
+                document.getElementById('newWorkerRole').value = '';
+                document.getElementById('newWorkerTime').value = '';
+                document.getElementById('newWorkerPassword').value = '';
+                document.getElementById('newWorkerStatus').value = 'Scheduled';
+            } else {
+                alert('Please fill in all fields');
+            }
+        }
+
+        // --- Render Functions ---
+
+        function renderShifts(data) {
+            document.getElementById('shifts-list').innerHTML = data.map(item => `
+            <div class="card shift">
+                ${del('shifts', item.id)}
+                <div class="card-header">
+                    <div>${edit('shifts', item.id, 'name', item.name)}</div>
+                    <span class="badge bg-blue">${edit('shifts', item.id, 'role', item.role)}</span>
+                </div>
+                <div class="card-body">
+                    <div class="time-slot"><i class="far fa-clock"></i> ${edit('shifts', item.id, 'time', item.time)}</div>
+                    <p style="margin-top:10px">Status: <strong>${edit('shifts', item.id, 'status', item.status)}</strong></p>
+                </div>
+            </div>`).join('');
+        }
+
+        function renderDeliveries(data) {
+            document.getElementById('deliveries-list').innerHTML = data.map(item => {
+                let color = item.status === 'Delivered' ? 'bg-green' : (item.status === 'En Route' ? 'bg-orange' : 'bg-blue');
+                return `<div class="card delivery">
+            ${del('deliveries', item.id)}
+            <div class="card-header">
+                <div>${edit('deliveries', item.id, 'label', item.label)}</div>
+                <span class="badge ${color}">${edit('deliveries', item.id, 'status', item.status)}</span>
+            </div>
+            <div class="card-body">
+                <p><i class="fas fa-utensils"></i> ${edit('deliveries', item.id, 'items', item.items)}</p>
+                <p><i class="fas fa-map-marker-alt"></i> ${edit('deliveries', item.id, 'address', item.address)}</p>
+            </div>
+        </div>`
+            }).join('');
+        }
+
+        function renderTraining(data) {
+            document.getElementById('training-list').innerHTML = data.map(item => `
+            <div class="card training">
+                ${del('training', item.id)}
+                <div class="card-header"><div>${edit('training', item.id, 'topic', item.topic)}</div></div>
+                <div class="card-body">
+                    <div class="time-slot"><i class="far fa-clock"></i> ${edit('training', item.id, 'time', item.time)}</div>
+                    <p>Trainer: ${edit('training', item.id, 'trainer', item.trainer)}</p>
+                </div>
+            </div>`).join('');
+        }
+
+        function renderAppointments(data) {
+            document.getElementById('appointments-list').innerHTML = data.map(item => `
+            <div class="card appoint">
+                ${del('appointments', item.id)}
+                <div class="card-header">
+                    <div>${edit('appointments', item.id, 'with', item.with)}</div>
+                    <span class="badge bg-orange">${edit('appointments', item.id, 'location', item.location)}</span>
+                </div>
+                <div class="card-body">
+                    <div class="time-slot"><i class="far fa-clock"></i> ${edit('appointments', item.id, 'time', item.time)}</div>
+                    <p>${edit('appointments', item.id, 'purpose', item.purpose)}</p>
+                </div>
+            </div>`).join('');
+        }
+
+        // 2. Data Initialization and Update Listeners
+        socket.on('init', (data) => {
+            console.log("Initial data received from server.");
+            renderShifts(data.shifts);
+            renderDeliveries(data.deliveries);
+            renderTraining(data.training);
+            renderAppointments(data.appointments);
+        });
+
+        // 3. Real-time Update Listener for Shifts (The key real-time feature)
+        socket.on('shiftsUpdate', (newShifts) => {
+            console.log("Shifts updated in real time.");
+            renderShifts(newShifts);
+        });
+
+        // 4. UI Logic
+        function showSection(id) {
+            document.querySelectorAll('.section-container, .menu-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            const idx = ['shifts', 'deliveries', 'training', 'appointments'].indexOf(id);
+            document.querySelectorAll('.menu-item')[idx].classList.add('active');
+            document.getElementById('page-title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+
+            // Show Add Button only on Shifts page for Admin
+            const addBtn = document.getElementById('add-worker-btn');
+            if (userRole === 'admin' && id === 'shifts') {
+                addBtn.style.display = 'flex';
+            } else {
+                addBtn.style.display = 'none';
+            }
+        }
+
+        // 5. Initialize on Load
+        window.onload = () => {
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        };
+    </script>
+
+</body>
+
+</html>

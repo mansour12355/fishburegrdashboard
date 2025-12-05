@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const mongoose = require('mongoose');
+const { Sequelize, DataTypes } = require('sequelize');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -14,106 +14,86 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// --- 1. MONGODB CONNECTION ---
-// REPLACE THIS STRING WITH YOUR OWN MONGO URL
-const MONGO_URI = 'mongodb://127.0.0.1:27017/resto_dashboard';
-
-console.log('⏳ Attempting to connect to MongoDB at:', MONGO_URI);
-
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => {
-        console.error('❌ MongoDB Connection Error:', err.message);
-        console.log('   (Hint: Is MongoDB installed and running on your computer?)');
-    });
-
-// Additional Event Listeners for Debugging
-mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ MongoDB Disconnected');
-});
-mongoose.connection.on('error', (err) => {
-    console.error('❌ Runtime MongoDB Error:', err);
+// --- 1. SQLITE CONNECTION ---
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite',
+    logging: false // Set to console.log to see SQL queries
 });
 
-// --- 2. SCHEMAS & MODELS ---
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    password: { type: String, required: true },
-    role: { type: String, default: 'worker' }
+console.log('⏳ Attempting to connect to SQLite...');
+
+// --- 2. MODELS ---
+const User = sequelize.define('User', {
+    username: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    role: { type: DataTypes.STRING, defaultValue: 'worker' }
 });
 
-const ShiftSchema = new mongoose.Schema({
-    id: Number, // Keeping 'id' to match your frontend logic
-    name: String,
-    role: String,
-    time: String,
-    status: { type: String, default: 'Scheduled' }
+const Shift = sequelize.define('Shift', {
+    // Sequelize adds 'id' (Integer, Primary Key, Auto-increment) by default
+    name: DataTypes.STRING,
+    role: DataTypes.STRING,
+    time: DataTypes.STRING,
+    status: { type: DataTypes.STRING, defaultValue: 'Scheduled' }
 });
 
-const DeliverySchema = new mongoose.Schema({
-    id: Number,
-    label: String,
-    items: String,
-    address: String,
-    status: String
+const Delivery = sequelize.define('Delivery', {
+    label: DataTypes.STRING,
+    items: DataTypes.STRING,
+    address: DataTypes.STRING,
+    status: DataTypes.STRING
 });
 
-const TrainingSchema = new mongoose.Schema({
-    id: Number,
-    topic: String,
-    trainer: String,
-    time: String,
-    attendees: Number
+const Training = sequelize.define('Training', {
+    topic: DataTypes.STRING,
+    trainer: DataTypes.STRING,
+    time: DataTypes.STRING,
+    attendees: DataTypes.INTEGER
 });
 
-const AppointmentSchema = new mongoose.Schema({
-    id: Number,
-    with: String,
-    purpose: String,
-    time: String,
-    location: String
+const Appointment = sequelize.define('Appointment', {
+    with: DataTypes.STRING,
+    purpose: DataTypes.STRING,
+    time: DataTypes.STRING,
+    location: DataTypes.STRING
 });
-
-const User = mongoose.model('User', UserSchema);
-const Shift = mongoose.model('Shift', ShiftSchema);
-const Delivery = mongoose.model('Delivery', DeliverySchema);
-const Training = mongoose.model('Training', TrainingSchema);
-const Appointment = mongoose.model('Appointment', AppointmentSchema);
 
 // --- 3. HELPER: FETCH ALL DATA ---
 async function getAllData() {
     return {
-        shifts: await Shift.find(),
-        deliveries: await Delivery.find(),
-        training: await Training.find(),
-        appointments: await Appointment.find()
+        shifts: await Shift.findAll(),
+        deliveries: await Delivery.findAll(),
+        training: await Training.findAll(),
+        appointments: await Appointment.findAll()
     };
 }
 
-// --- 4. SEED DATA (Only runs if DB is empty) ---
+// --- 4. SEED DATA ---
 async function seedDatabase() {
     try {
-        // Wait for connection to be ready before querying
-        if (mongoose.connection.readyState !== 1) {
-            // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
-            if (mongoose.connection.readyState === 0) return;
-            // If connecting, we wait; usually the .then() block handles this, 
-            // but safe coding prevents race conditions in seeds.
-        }
+        await sequelize.sync(); // Create tables if they don't exist
+        console.log('✅ Connected to SQLite & Synced Models');
 
-        const adminExists = await User.findOne({ username: 'admin' });
+        const adminExists = await User.findOne({ where: { username: 'admin' } });
         if (!adminExists) {
             console.log("🌱 Seeding Database with Admin...");
-            await new User({ username: 'admin', password: '123', role: 'admin' }).save();
-            await new Shift({ id: 1, name: "Sarah Connor", role: "Head Chef", time: "10:00 - 18:00", status: "On Duty" }).save();
-            await new Delivery({ id: 992, label: "#ORD-992", items: "2x Burgers", address: "12 Main St", status: "Cooking" }).save();
+            await User.create({ username: 'admin', password: '123', role: 'admin' });
+
+            // Seed initial data
+            await Shift.create({ name: "Sarah Connor", role: "Head Chef", time: "10:00 - 18:00", status: "On Duty" });
+
+            // For Delivery, we want to match the specific ID if possible, or just let it auto-increment.
+            // Sequelize allows forcing ID if we pass it.
+            await Delivery.create({ id: 992, label: "#ORD-992", items: "2x Burgers", address: "12 Main St", status: "Cooking" });
         }
     } catch (error) {
-        console.error("Seed Error (Database might not be ready):", error.message);
+        console.error("Seed Error:", error.message);
     }
 }
-// Run seed after a short delay to ensure connection
-setTimeout(seedDatabase, 2000);
+
+// Initialize DB
+seedDatabase();
 
 // --- 5. ROUTES ---
 
@@ -121,7 +101,7 @@ setTimeout(seedDatabase, 2000);
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = await User.findOne({ username, password });
+        const user = await User.findOne({ where: { username, password } });
         if (user) {
             res.json({ success: true, role: user.role, name: user.username });
         } else {
@@ -136,40 +116,33 @@ app.post('/api/login', async (req, res) => {
 io.on('connection', async (socket) => {
     console.log('User connected:', socket.id);
 
-    // Send DB data to client immediately on connection
-    // We wrap this in a try/catch in case DB isn't ready
     try {
         socket.emit('init', await getAllData());
     } catch (e) {
-        console.log("Database not ready yet for new connection");
+        console.log("Error sending init data:", e);
     }
 
     // ADMIN: Add Worker
     socket.on('addWorker', async (data) => {
         try {
-            // Create User Login
-            await new User({ username: data.name, password: '123', role: 'worker' }).save();
+            await User.create({ username: data.name, password: '123', role: 'worker' });
 
-            // Create Shift Entry
-            await new Shift({
-                id: Date.now(),
+            await Shift.create({
                 name: data.name,
                 role: data.role,
                 time: data.time,
                 status: 'Scheduled'
-            }).save();
+            });
 
-            // Broadcast updates
             io.emit('init', await getAllData());
         } catch (e) {
             console.error("Error adding worker:", e);
         }
     });
 
-    // ADMIN: General Update (Edit Pencils)
+    // ADMIN: General Update
     socket.on('updateEntry', async ({ category, id, field, value }) => {
         try {
-            // Map category string to Mongoose Model
             const Models = {
                 'shifts': Shift,
                 'deliveries': Delivery,
@@ -178,7 +151,10 @@ io.on('connection', async (socket) => {
             };
 
             if (Models[category]) {
-                await Models[category].findOneAndUpdate({ id: parseInt(id) }, { [field]: value });
+                await Models[category].update(
+                    { [field]: value },
+                    { where: { id: parseInt(id) } }
+                );
                 io.emit('init', await getAllData());
             }
         } catch (e) {
@@ -189,10 +165,10 @@ io.on('connection', async (socket) => {
     // WORKER: Toggle Status
     socket.on('workerToggleStatus', async ({ name }) => {
         try {
-            const shift = await Shift.findOne({ name: name });
+            const shift = await Shift.findOne({ where: { name: name } });
             if (shift) {
-                shift.status = shift.status === 'On Duty' ? 'Off Duty' : 'On Duty';
-                await shift.save();
+                const newStatus = shift.status === 'On Duty' ? 'Off Duty' : 'On Duty';
+                await shift.update({ status: newStatus });
                 io.emit('init', await getAllData());
             }
         } catch (e) {
