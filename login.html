@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RestoManager - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --text-main: #ffffff;
+            --text-muted: #bdc3c7;
+            --accent: #00d2ff;
+            --accent-hover: #3a7bd5;
+            --danger: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+        }
+
+        .brand {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        #error-msg {
+            color: var(--danger);
+            margin-top: 20px;
+            font-size: 0.95rem;
+            display: none;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 25px;
+            line-height: 1.6;
+            opacity: 0.8;
+        }
+
+        .hint b {
+            color: var(--accent);
+        }
+
+        /* Checkbox Style */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .checkbox-container input {
+            width: auto;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="brand"><i class="fas fa-utensils"></i> RestoManager</div>
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="admin or Worker Name" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Default: 123" required>
+            </div>
+
+            <!-- Admin Mode Toggle -->
+            <div class="checkbox-container">
+                <input type="checkbox" id="adminMode">
+                <label for="adminMode" style="display: inline; margin: 0; cursor: pointer;">Login as Admin</label>
+            </div>
+
+            <button type="submit">Login</button>
+            <p id="error-msg">Invalid Credentials</p>
+            <p class="hint">Try: <b>admin</b> / 123 <br> or <b>Sarah Connor</b> / 123</p>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+            const forceAdmin = document.getElementById('adminMode').checked;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Determine Role:
+                    // 1. If checkbox is checked -> 'admin'
+                    // 2. If server sent a role -> use that
+                    // 3. Fallback: if username is 'admin' -> 'admin', else 'worker'
+                    let role = forceAdmin ? 'admin' : (data.role || (user === 'admin' ? 'admin' : 'worker'));
+                    const name = data.name || user;
+
+                    // Save specific user details
+                    localStorage.setItem('user_role', role);
+                    localStorage.setItem('user_name', name);
+
+                    window.location.href = 'index.html';
+                } else {
+                    errorMsg.style.display = 'block';
+                    errorMsg.innerText = data.message;
+                }
+            } catch (error) {
+                console.error(error);
+                errorMsg.style.display = 'block';
+                errorMsg.innerText = "Server connection failed";
+            }
+        });
+    </script>
+</body>
+
+</html>
